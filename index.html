@@ -25,7 +25,7 @@
 <body>
   <div class="wrap">
     <div class="searchbar">
-      <input id="q" placeholder="Search YouTube (via yewtu.be)" />
+      <input id="q" placeholder="Search" />
       <button onclick="doSearch()">Search</button>
     </div>
     <div id="results" class="results"></div>
@@ -43,7 +43,7 @@ async function doSearch() {
   const res = document.getElementById('results');
   res.innerHTML = "Searching...";
   try {
-    const r = await fetch("https://yewtu.be/api/v1/search?q=" + encodeURIComponent(q));
+    const r = await fetch("https://inv.nadeko.net/api/v1/search?q=" + encodeURIComponent(q));
     const data = await r.json();
     res.innerHTML = "";
     data.forEach(item => {
