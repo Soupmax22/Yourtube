@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minimal No-Cookie YouTube</title>
+<style>
+  body { background:#1a1a1a; color:#ddd; font-family:sans-serif; margin:0; }
+  .wrap { max-width:900px; margin:auto; padding:20px; }
+  .searchbar { display:flex; gap:8px; }
+  input { flex:1; padding:12px; border-radius:8px; border:1px solid #333;
+          background:#2a2a2a; color:#fff; font-size:16px; }
+  button { padding:12px 18px; border-radius:8px; border:none; background:#444; color:#fff; cursor:pointer; }
+  .results { margin-top:20px; display:flex; flex-direction:column; gap:12px; }
+  .result { display:flex; gap:12px; background:#2a2a2a; padding:12px; border-radius:10px; cursor:pointer; }
+  .thumb { width:160px; height:90px; background:#444; border-radius:6px; object-fit:cover; }
+  .meta { flex:1; }
+  .title { font-size:16px; color:#fff; margin-bottom:4px; }
+  .desc { font-size:13px; color:#aaa; }
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; align-items:center; justify-content:center; }
+  iframe { width:80%; height:80%; border:0; }
+  .close { position:absolute; top:20px; right:20px; background:#000; color:#fff; border:1px solid #666; border-radius:6px; padding:6px 12px; cursor:pointer; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="searchbar">
+      <input id="q" placeholder="Search YouTube (via yewtu.be)" />
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <div id="results" class="results"></div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <button class="close" onclick="closePlayer()">✕ Close</button>
+    <iframe id="player" allowfullscreen></iframe>
+  </div>
+
+<script>
+async function doSearch() {
+  const q = document.getElementById('q').value.trim();
+  if(!q) return;
+  const res = document.getElementById('results');
+  res.innerHTML = "Searching...";
+  try {
+    const r = await fetch("https://yewtu.be/api/v1/search?q=" + encodeURIComponent(q));
+    const data = await r.json();
+    res.innerHTML = "";
+    data.forEach(item => {
+      if(!item.videoId) return;
+      const div = document.createElement("div");
+      div.className = "result";
+      div.innerHTML = `
+        <img class="thumb" src="${item.videoThumbnails?.[0]?.url || ''}">
+        <div class="meta">
+          <div class="title">${item.title}</div>
+          <div class="desc">${item.author || ''} • ${item.viewCountText || ''}</div>
+        </div>`;
+      div.onclick = () => openPlayer(item.videoId);
+      res.appendChild(div);
+    });
+  } catch(e) {
+    res.innerHTML = "Error loading results.";
+    console.error(e);
+  }
+}
+
+function openPlayer(id) {
+  document.getElementById('player').src = "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1";
+  document.getElementById('overlay').style.display = "flex";
+}
+
+function closePlayer() {
+  document.getElementById('player').src = "";
+  document.getElementById('overlay').style.display = "none";
+}
+</script>
+</body>
+</html>
