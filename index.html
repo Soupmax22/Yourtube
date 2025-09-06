@@ -39,9 +39,21 @@
 <script>
 const instances = [
   "https://inv.nadeko.net",
+  "https://yewtu.be",
   "https://invidious.nerdvpn.de",
-  "https://invidious.fdn.fr",
-  "https://yewtu.be"
+  "https://invidious.f5.si",
+  "https://vid.puffyan.us",
+  "https://invidious.flokinet.to",
+  "https://invidious.projectsegfau.lt",
+  "https://inv.bp.projectsegfau.lt",
+  "https://inv.in.projectsegfau.lt",
+  "https://invidious.tiekoetter.com",
+  "https://invidious.slipfox.xyz",
+  "https://invidious.privacydev.net",
+  "https://vid.priv.au",
+  "https://iv.ggtyler.dev",
+  "https://invidious.0011.lt",
+  "https://inv.zzls.xyz"
 ];
 
 async function doSearch() {
@@ -52,7 +64,8 @@ async function doSearch() {
 
   for (let base of instances) {
     try {
-      const r = await fetch(base + "/api/v1/search?q=" + encodeURIComponent(q));
+      const target = base + "/api/v1/search?q=" + encodeURIComponent(q);
+      const r = await fetch("https://corsproxy.io/?url=" + encodeURIComponent(target));
       if (!r.ok) continue;
       const data = await r.json();
       if (!Array.isArray(data) || !data.length) continue;
@@ -71,7 +84,7 @@ async function doSearch() {
         div.onclick = () => openPlayer(item.videoId);
         res.appendChild(div);
       });
-      return; // stop at first successful instance
+      return; // stop once a working instance is found
     } catch (e) {
       console.warn("Failed with", base, e);
     }
