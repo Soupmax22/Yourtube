@@ -6,18 +6,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch(target);
+    const r = await fetch(target, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; VercelProxy/1.0)",
+        "Accept": "application/json,text/plain,*/*"
+      }
+    });
+
     const contentType = r.headers.get("content-type") || "application/octet-stream";
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "s-maxage=60"); // cache 1 min on Vercel edge CDN
 
     if (contentType.startsWith("image/")) {
-      // Handle thumbnails as binary
       const buffer = Buffer.from(await r.arrayBuffer());
       res.status(r.status).send(buffer);
     } else {
-      // JSON/text response
       const text = await r.text();
       res.status(r.status).send(text);
     }
