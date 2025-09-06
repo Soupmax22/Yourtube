@@ -65,7 +65,7 @@ async function doSearch() {
   for (let base of instances) {
     try {
       const target = base + "/api/v1/search?q=" + encodeURIComponent(q);
-      const r = await fetch("https://corsproxy.io/?url=" + encodeURIComponent(target));
+      const r = await fetch("https://yourtube-lac.vercel.app/api/proxy?url=" + encodeURIComponent(target));
       if (!r.ok) continue;
       const data = await r.json();
       if (!Array.isArray(data) || !data.length) continue;
