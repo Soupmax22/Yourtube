@@ -37,6 +37,8 @@
   </div>
 
 <script>
+const proxy = "https://YOURAPP.vercel.app/api/proxy?url="; // change to your deployed Vercel URL
+
 const instances = [
   "https://inv.nadeko.net",
   "https://yewtu.be",
@@ -65,7 +67,7 @@ async function doSearch() {
   for (let base of instances) {
     try {
       const target = base + "/api/v1/search?q=" + encodeURIComponent(q);
-      const r = await fetch("https://yourtube-lac.vercel.app/api/proxy?url=" + encodeURIComponent(target));
+      const r = await fetch(proxy + encodeURIComponent(target));
       if (!r.ok) continue;
       const data = await r.json();
       if (!Array.isArray(data) || !data.length) continue;
@@ -73,10 +75,11 @@ async function doSearch() {
       res.innerHTML = "";
       data.forEach(item => {
         if(!item.videoId) return;
+        const thumb = proxy + encodeURIComponent(item.videoThumbnails?.[0]?.url || '');
         const div = document.createElement("div");
         div.className = "result";
         div.innerHTML = `
-          <img class="thumb" src="${item.videoThumbnails?.[0]?.url || ''}">
+          <img class="thumb" src="${thumb}">
           <div class="meta">
             <div class="title">${item.title}</div>
             <div class="desc">${item.author || ''} • ${item.viewCountText || ''}</div>
