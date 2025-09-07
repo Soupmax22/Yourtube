@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "s-maxage=60"); // cache 1 min on Vercel edge CDN
+    res.setHeader("Cache-Control", "s-maxage=60"); // cache 1 min on Vercel CDN
 
     if (contentType.startsWith("image/")) {
       const buffer = Buffer.from(await r.arrayBuffer());
