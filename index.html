@@ -39,60 +39,60 @@
 <script>
 const proxy = "https://yourtube-lac.vercel.app/api/proxy?url=";
 
-// EU-friendly instances first, then others
 const instances = [
-  "https://yewtu.be",                
-  "https://inv.zzls.xyz",            
   "https://invidious.tiekoetter.com",
   "https://invidious.nerdvpn.de",
-  "https://inv.nadeko.net",
-  "https://invidious.f5.si",
-  "https://vid.puffyan.us",
-  "https://invidious.flokinet.to",
+  "https://invidious.slipfox.xyz",
   "https://invidious.projectsegfau.lt",
+  "https://vid.puffyan.us",
+  "https://yewtu.be",
+  "https://invidious.f5.si",
+  "https://invidious.flokinet.to",
   "https://inv.bp.projectsegfau.lt",
   "https://inv.in.projectsegfau.lt",
-  "https://invidious.slipfox.xyz",
   "https://invidious.privacydev.net",
   "https://vid.priv.au",
   "https://iv.ggtyler.dev",
   "https://invidious.0011.lt"
 ];
 
-// Safari-friendly parallel requests
+// Truly parallel: fastest valid result wins
 async function doSearch() {
   const q = document.getElementById('q').value.trim();
-  if(!q) return;
+  if (!q) return;
   const res = document.getElementById('results');
   res.innerHTML = "Searching...";
 
-  const requests = instances.map(base => {
+  const controllers = [];
+  const promises = instances.map(base => {
+    const controller = new AbortController();
+    controllers.push(controller);
     const target = base + "/api/v1/search?q=" + encodeURIComponent(q);
-    return fetch(proxy + encodeURIComponent(target))
+    return fetch(proxy + encodeURIComponent(target), { signal: controller.signal })
       .then(r => r.ok ? r.json() : null)
+      .then(data => (Array.isArray(data) && data.length ? data : null))
       .catch(() => null);
   });
 
-  let first = null;
-  try {
-    first = await Promise.race(requests);
-  } catch(e) {
-    first = null;
+  let data = null;
+  for (const p of promises) {
+    try {
+      data = await Promise.race(promises);
+      if (data) break;
+    } catch (e) {}
   }
 
-  if (!first) {
-    const all = await Promise.all(requests);
-    first = all.find(d => Array.isArray(d) && d.length);
-  }
+  // Cancel all other requests once we have a result
+  if (data) controllers.forEach(c => c.abort());
 
-  if (!first || !Array.isArray(first) || !first.length) {
+  if (!data) {
     res.innerHTML = "Error: all instances failed.";
     return;
   }
 
   res.innerHTML = "";
-  first.forEach(item => {
-    if(!item.videoId) return;
+  data.forEach(item => {
+    if (!item.videoId) return;
     const thumb = proxy + encodeURIComponent(item.videoThumbnails?.[0]?.url || '');
     const div = document.createElement("div");
     div.className = "result";
@@ -108,7 +108,8 @@ async function doSearch() {
 }
 
 function openPlayer(id) {
-  document.getElementById('player').src = "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1";
+  document.getElementById('player').src =
+    "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1";
   document.getElementById('overlay').style.display = "flex";
 }
 
