@@ -8,7 +8,8 @@ export default async function handler(req, res) {
   try {
     const r = await fetch(target, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; VercelProxy/1.0)",
+        // Use a normal browser UA so Invidious doesn’t block
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
         "Accept": "application/json,text/plain,*/*"
       }
     });
@@ -17,7 +18,7 @@ export default async function handler(req, res) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "s-maxage=60"); // cache 1 min on Vercel CDN
+    res.setHeader("Cache-Control", "s-maxage=60"); // cache at edge for 1 min
 
     if (contentType.startsWith("image/")) {
       const buffer = Buffer.from(await r.arrayBuffer());
