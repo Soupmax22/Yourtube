@@ -37,15 +37,15 @@
   </div>
 
 <script>
-const proxy = "https://yourtube-lac.vercel.app/api/proxy?url=";
+const proxy = "https://YOURAPP.vercel.app/api/proxy?url="; // replace with your Vercel app
 
-// UK/EU-friendly instances first, then others
+// EU-friendly instances first, then others
 const instances = [
-  "https://yewtu.be",                // Germany
-  "https://inv.zzls.xyz",            // France
-  "https://invidious.tiekoetter.com",// Germany
-  "https://invidious.nerdvpn.de",    // Germany
-  "https://inv.nadeko.net",          // fallback
+  "https://yewtu.be",                
+  "https://inv.zzls.xyz",            
+  "https://invidious.tiekoetter.com",
+  "https://invidious.nerdvpn.de",
+  "https://inv.nadeko.net",
   "https://invidious.f5.si",
   "https://vid.puffyan.us",
   "https://invidious.flokinet.to",
@@ -59,46 +59,52 @@ const instances = [
   "https://invidious.0011.lt"
 ];
 
-// parallel requests: fastest wins
+// Safari-friendly parallel requests
 async function doSearch() {
   const q = document.getElementById('q').value.trim();
   if(!q) return;
   const res = document.getElementById('results');
   res.innerHTML = "Searching...";
 
+  const requests = instances.map(base => {
+    const target = base + "/api/v1/search?q=" + encodeURIComponent(q);
+    return fetch(proxy + encodeURIComponent(target))
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
+  });
+
+  let first = null;
   try {
-    const requests = instances.map(base => {
-      const target = base + "/api/v1/search?q=" + encodeURIComponent(q);
-      return fetch(proxy + encodeURIComponent(target))
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null);
-    });
-
-    const data = (await Promise.any(requests).catch(() => null));
-
-    if (!data || !Array.isArray(data) || !data.length) {
-      res.innerHTML = "Error: all instances failed.";
-      return;
-    }
-
-    res.innerHTML = "";
-    data.forEach(item => {
-      if(!item.videoId) return;
-      const thumb = proxy + encodeURIComponent(item.videoThumbnails?.[0]?.url || '');
-      const div = document.createElement("div");
-      div.className = "result";
-      div.innerHTML = `
-        <img class="thumb" src="${thumb}">
-        <div class="meta">
-          <div class="title">${item.title}</div>
-          <div class="desc">${item.author || ''} • ${item.viewCountText || ''}</div>
-        </div>`;
-      div.onclick = () => openPlayer(item.videoId);
-      res.appendChild(div);
-    });
-  } catch (e) {
-    res.innerHTML = "Error: all instances failed.";
+    first = await Promise.race(requests);
+  } catch(e) {
+    first = null;
   }
+
+  if (!first) {
+    const all = await Promise.all(requests);
+    first = all.find(d => Array.isArray(d) && d.length);
+  }
+
+  if (!first || !Array.isArray(first) || !first.length) {
+    res.innerHTML = "Error: all instances failed.";
+    return;
+  }
+
+  res.innerHTML = "";
+  first.forEach(item => {
+    if(!item.videoId) return;
+    const thumb = proxy + encodeURIComponent(item.videoThumbnails?.[0]?.url || '');
+    const div = document.createElement("div");
+    div.className = "result";
+    div.innerHTML = `
+      <img class="thumb" src="${thumb}">
+      <div class="meta">
+        <div class="title">${item.title}</div>
+        <div class="desc">${item.author || ''} • ${item.viewCountText || ''}</div>
+      </div>`;
+    div.onclick = () => openPlayer(item.videoId);
+    res.appendChild(div);
+  });
 }
 
 function openPlayer(id) {
